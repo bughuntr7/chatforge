@@ -18,11 +18,6 @@ domain_url = os.environ["FRONTEND_DOMAIN"]
 
 stripe.api_key = stripe_keys["secret_key"]
 
-
-print(stripe_keys["secret_key"])
-print(stripe_keys["publishable_key"])
-print(stripe_keys["endpoint_secret"])
-
 # @payment_blueprint.route('/create-checkout-session', methods=['POST'])
 # def create_checkout_session():
 #     try:
