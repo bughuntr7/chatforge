@@ -31,9 +31,6 @@ def login():
         if not user:
             return jsonify({'error': 'User not found.'}), 403
 
-        # Debugging: Log the pulled user data and the provided password
-        print(f"Pulled user data from DB: {user}")
-        print(f"Provided password: {data['password']}")
         mautic_data = {}
         # Check if the provided password matches the stored password hash
         if check_password_hash(user.password, password):            
