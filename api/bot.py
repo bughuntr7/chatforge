@@ -2,11 +2,11 @@ from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 from models import Bot, KnowledgeBase, Conversation, ChatLog, BillingPlan, User, RegisteredWebsite, ShopInfo, Order
 from flask_jwt_extended import jwt_required
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from utils.provider import generate
 from utils.common import upload_image_to_spaces, get_url_from_name
 from utils.errors import error_response, success_response, handle_exception
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from models import db
 import uuid
 from datetime import datetime
 import os
