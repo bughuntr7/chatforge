@@ -82,22 +82,15 @@ app.register_blueprint(payment_blueprint)
 app.register_blueprint(wordpress_blueprint, url_prefix='/api')
 
 get_bucket_name()
+
 @app.route("/")
 def index():
-   db.create_all()
-   items = ['72', '73', '76', '77', '84']
-   # db.create_all(bind_key='shopify')
-   # db.drop_all()
-   # del_all_records()
-   for i in items:
-      User.del_by_id(i)
-   # for i in items:
-   #    delete_mautic_contact(i)
-   #    print("current number", i)
-  
-   # print('Deleted')
-   # deleteIndex()
-   return "This is APIs for CustomGPT!"
+    """Health check endpoint for the ChatForge API."""
+    return jsonify({
+        "message": "ChatForge API is running",
+        "status": "healthy",
+        "version": "1.0.0"
+    }), 200
 
 if __name__ == '__main__':
    # Start profiling
