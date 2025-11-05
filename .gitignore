@@ -69,3 +69,7 @@ htmlcov/
 # Profiling
 *.prof
 *.pstats
+
+# Logs
+logs/
+*.log
