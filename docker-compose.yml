@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: chatforge-api
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DB_URI=${DB_URI}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENVIRONMENT=${PINECONE_ENVIRONMENT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_ENDPINT_SECRET=${STRIPE_ENDPINT_SECRET}
+      - SHOPIFY_API_KEY=${SHOPIFY_API_KEY}
+      - SHOPIFY_SECRET_KEY=${SHOPIFY_SECRET_KEY}
+      - MAUTIC_BASE_URL=${MAUTIC_BASE_URL}
+      - MAUTIC_CLIENT_ID=${MAUTIC_CLIENT_ID}
+      - MAUTIC_CLIENT_SECRET=${MAUTIC_CLIENT_SECRET}
+      - BUCKET_ACCESS_KEY_ID=${BUCKET_ACCESS_KEY_ID}
+      - BUCKET_SECRET_ACCESS_KEY=${BUCKET_SECRET_ACCESS_KEY}
+      - BUCKET_ENDPOINT=${BUCKET_ENDPOINT}
+      - UPLOAD_FOLDER=/app/uploads
+      - FRONTEND_DOMAIN=${FRONTEND_DOMAIN}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    restart: unless-stopped
+
