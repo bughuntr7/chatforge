@@ -50,3 +50,26 @@ def success_response(data=None, message=None, status_code=200):
     
     return jsonify(response), status_code
 
+def handle_exception(e):
+    """
+    Handle exceptions and return appropriate error response.
+    
+    Args:
+        e: Exception object
+    
+    Returns:
+        Tuple of (jsonify response, status_code)
+    """
+    if isinstance(e, ValueError):
+        return error_response('Invalid input value', 400, 'VALIDATION_ERROR', str(e))
+    elif isinstance(e, KeyError):
+        return error_response(f'Missing required field: {str(e)}', 400, 'VALIDATION_ERROR')
+    elif isinstance(e, IntegrityError):
+        return error_response('Database integrity error', 409, 'CONFLICT_ERROR', str(e))
+    elif isinstance(e, SQLAlchemyError):
+        return error_response('Database error', 500, 'DATABASE_ERROR', str(e))
+    elif isinstance(e, BadRequest):
+        return error_response('Bad request', 400, 'BAD_REQUEST', str(e))
+    else:
+        return error_response('Internal server error', 500, 'INTERNAL_ERROR', str(e))
+
