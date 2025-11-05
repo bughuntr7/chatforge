@@ -20,6 +20,7 @@ from api.payment import payment_blueprint
 from api.shopify import shopify_blueprint, sync_products
 from api.mautic import delete_mautic_contact
 from api.wordpress import wordpress_blueprint
+from api_docs import api_blueprint
 from models import db, User
 from datetime import timedelta
 from utils.common import get_bucket_name
@@ -91,6 +92,7 @@ scheduler.start()
 # CORS(app, supports_credentials=True, origins=['https://your-frontend-domain.com'])
 CORS(app, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
 
+app.register_blueprint(api_blueprint)
 app.register_blueprint(user_blueprint, url_prefix='/api')
 app.register_blueprint(bot_blueprint, url_prefix='/api')
 app.register_blueprint(knowledge_blueprint, url_prefix='/api')
