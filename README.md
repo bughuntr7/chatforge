@@ -48,7 +48,7 @@ STORM_GLASS_API_KEY=
 ---
 
 ## 💻 Running Locally
-After setting up your environment variables, run:
+After setting up your environment variables, run this:
 
 ```bash
 python app.py
