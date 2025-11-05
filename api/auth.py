@@ -13,6 +13,7 @@ import hashlib
 import datetime
 from api.mautic import get_access_token, create_mautic_user, update_mautic_user, login_mautic, mautic_reset_password, mautic_send_verfication_link, send_registration_mail
 from utils.common import get_language_code
+from utils.errors import error_response, success_response
 import uuid
 from api.payment import create_customer_id
 import secrets
@@ -23,8 +24,8 @@ user_blueprint = Blueprint('user_blueprint', __name__)
 @user_blueprint.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    if not data or not data['email'] or not data['password']:
-        return jsonify({'message': 'Could not verify', 'WWW-Authenticate': 'Basic realm="Login required!"'}), 401
+        if not data or not data['email'] or not data['password']:
+        return error_response('Email and password are required', 400, 'VALIDATION_ERROR')
 
     try:
         email = data['email']
@@ -32,7 +33,7 @@ def login():
         user = User.query.filter_by(email=email).first()
         login_datetime = datetime.datetime.now()
         if not user:
-            return jsonify({'error': 'User not found.'}), 403
+            return error_response('User not found', 404, 'NOT_FOUND')
 
         mautic_data = {}
         # Check if the provided password matches the stored password hash
@@ -57,7 +58,7 @@ def login():
             mautic_data["last_login"]=login_datetime
             if login_mautic(mautic_data, user.mauticId) == 'error':
                 logger.debug("Password verification successful.")
-                return jsonify({'error': 'Server is busy. Try again later!'}), 400
+                return error_response('Server is busy. Try again later!', 503, 'SERVICE_UNAVAILABLE')
             
             access_token = create_access_token(identity=user.id, expires_delta=datetime.timedelta(hours=1))
             User.update_login(email)
@@ -66,11 +67,11 @@ def login():
             # set_access_cookies(response, token)
         else:
             logger.warning("Password verification failed.")
-            return jsonify({'error': 'Wrong credentials'}), 403
+            return error_response('Invalid credentials', 401, 'UNAUTHORIZED')
 
     except Exception as e:
-        logging.error(f"Login error: {e}")  # Use logging for errors
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Login error: {e}", exc_info=True)
+        return error_response('Internal server error', 500, 'INTERNAL_ERROR')
 
 
 @user_blueprint.route('/register', methods=['POST'])

@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
 from utils.provider import generate
 from utils.common import upload_image_to_spaces, get_url_from_name
+from utils.errors import error_response, success_response
 import uuid
 from datetime import datetime
 import os
@@ -83,11 +84,11 @@ def create_bot():
             return jsonify({'error': 'Server is busy. Try again later!'}), 400
 
 
-        return jsonify({'message': 'Success'}), 201
+        return success_response(message='Bot created successfully', status_code=201)
 
     except Exception as e:
         logger.error(f"Error in create_bot: {str(e)}", exc_info=True)
-        return jsonify({'error':'Server is busy!'}), 500
+        return error_response('Internal server error', 500, 'INTERNAL_ERROR')
 
 @bot_blueprint.route('/get_chatbots', methods=['GET'])
 @jwt_required()
@@ -292,7 +293,7 @@ def update_chatbot():
             elif domain and domain != 'undefined':
                 new_website = RegisteredWebsite(index=website_unique_id, user_id=user_id, bot_id=botId, domain=domain)
                 new_website.save()
-        return jsonify({'message': 'Success'}), 201
+        return success_response(message='Bot created successfully', status_code=201)
     except Exception as e:
         logger.error(f"Error in get_chatbots: {str(e)}", exc_info=True)
         return jsonify({"error": "Server error"}), 500
@@ -321,7 +322,7 @@ def query():
                     return True
             return False
         if check_domain() == False:
-            return jsonify({'message':'Unregistered domain'}), 403
+            return error_response('Unregistered domain', 403, 'FORBIDDEN')
         # Check the limits
         chat_log = ChatLog.get_by_session(session_id)
         logs = ChatLog.get_logs_by_bot_id(bot_id=bot_id)
@@ -329,9 +330,9 @@ def query():
         sessionLimits = BillingPlan.query.filter_by(code=user.billing_plan).first().max_sessions_per_month
         # print(sessionLimits)
         # print(bot_id)
-        if sessionLimits <= len(logs) and website != None:
+            if sessionLimits <= len(logs) and website != None:
             if chat_log is None:
-                return jsonify({'error': 'Maximum Session Exceeds'}), 403
+                return error_response('Maximum session limit exceeded', 403, 'LIMIT_EXCEEDED')
              
         # lang = data['lang']
         # language_codes = {
@@ -363,10 +364,10 @@ def query():
             new_log = ChatLog(user_id, bot.id, website, session_id, created_at, created_at)
             new_log.save()
 
-        return jsonify({'message': result, 'solve':solve}), 200
+        return success_response(data={'message': result, 'solve': solve})
     except Exception as e:
         logger.error(f"Error in bot endpoint: {str(e)}", exc_info=True)
-        return jsonify({'error': 'Server Error'}), 500
+        return error_response('Internal server error', 500, 'INTERNAL_ERROR')
 
 @bot_blueprint.route('/del_messages', methods=['POST'])
 @jwt_required()
