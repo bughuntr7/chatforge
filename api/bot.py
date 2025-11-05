@@ -328,9 +328,7 @@ def query():
         logs = ChatLog.get_logs_by_bot_id(bot_id=bot_id)
         user = User.get_by_userID(id=user_id)
         sessionLimits = BillingPlan.query.filter_by(code=user.billing_plan).first().max_sessions_per_month
-        # print(sessionLimits)
-        # print(bot_id)
-            if sessionLimits <= len(logs) and website != None:
+        if sessionLimits <= len(logs) and website != None:
             if chat_log is None:
                 return error_response('Maximum session limit exceeded', 403, 'LIMIT_EXCEEDED')
              
