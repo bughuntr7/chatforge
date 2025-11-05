@@ -43,11 +43,11 @@ app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 
 app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'legendarystar2160187@gmail.com'
-app.config['MAIL_PASSWORD'] = 'pksv wzbh wahl atbw'
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.googlemail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['SCHEDULER_API_ENABLED'] = True
 
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
