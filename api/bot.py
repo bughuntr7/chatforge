@@ -8,9 +8,11 @@ from utils.common import upload_image_to_spaces, get_url_from_name
 import uuid
 from datetime import datetime
 import os
+import logging
 from api.mautic import get_access_token, login_mautic
 
 bot_blueprint = Blueprint('bot_blueprint', __name__)
+logger = logging.getLogger(__name__)
 
 @bot_blueprint.route('/create_bot', methods=['POST'])
 @jwt_required()
@@ -54,7 +56,7 @@ def create_bot():
         else:
             bin_image = None
         new_bot = Bot(user_id=user_id, name=name, index=index,  avatar=unique_filename, color=color, active=active, start_time=start_time, end_time=end_time, knowledge_base=knowledge_base)
-        print("Start time >>>",new_bot.start_time)
+        logger.debug(f"Start time: {new_bot.start_time}")
         new_bot.save()
         user = User.query.filter_by(id=user_id).first()
         user.botsActive = int(user.botsActive) + 1
@@ -84,7 +86,7 @@ def create_bot():
         return jsonify({'message': 'Success'}), 201
 
     except Exception as e:
-        print(e)
+        logger.error(f"Error in create_bot: {str(e)}", exc_info=True)
         return jsonify({'error':'Server is busy!'}), 500
 
 @bot_blueprint.route('/get_chatbots', methods=['GET'])
@@ -140,10 +142,10 @@ def get_chatbot_data():
             else:
                 bot_data['avatar'] = ""  # No avatar case
             if bot_data['knowledge_base'] != "-1":
-                print(bot_data['knowledge_base'])
+                logger.debug(f"Knowledge base: {bot_data['knowledge_base']}")
                 knowledge_base = KnowledgeBase.query.filter_by(unique_id=bot_data['knowledge_base']).first()
                 if knowledge_base:
-                    print(knowledge_base)
+                    logger.debug(f"Knowledge base: {knowledge_base}")
                     bot_data['knowledge_base'] = knowledge_base.name
                 else:
                     bot_data['knowledge_base'] = ''
@@ -166,7 +168,7 @@ def get_chatbot_data():
         return jsonify({'error': 'Invalid bot_id format. It should be an integer.'}), 400
 
     except Exception as e:
-        print("Error:", str(e))
+        logger.error(f"Error in get_chatbots: {str(e)}", exc_info=True)
         return jsonify({'error': 'Server error.'}), 400
 
 @bot_blueprint.route('/del_bot', methods=['POST'])
@@ -175,7 +177,7 @@ def del_bot():
     try:
         data = request.get_json()
         bot_id = data["botId"]
-        print(bot_id)
+        logger.debug(f"Bot ID: {bot_id}")
         if not bot_id:
             return jsonify({'error': 'bot_id is required'}), 400
 
@@ -183,7 +185,7 @@ def del_bot():
 
         if not db_bot:
             return jsonify({'error': 'Bot not found'}), 404        
-        print(db_bot)
+        logger.debug(f"Bot data: {db_bot}")
 
         if ShopInfo.query.filter_by(connected_bot=db_bot.index).first():
             return jsonify({'error': 'Bot is in use. Please delete the shop first.'}), 400        
@@ -196,7 +198,7 @@ def del_bot():
         return jsonify({'error': 'Invalid bot_id format. It should be an integer.'}), 400
 
     except Exception as e:
-        print("Error:", str(e))
+        logger.error(f"Error in get_chatbots: {str(e)}", exc_info=True)
         return jsonify({'error': 'Server error.'}), 400
 
 @bot_blueprint.route('/get_embedding', methods=['GET'])
@@ -204,7 +206,7 @@ def get_embeddings():
     try:
         botIndex = request.args.get('botIndex')
         userIndex = request.args.get('userIndex')
-        print(botIndex)
+        logger.debug(f"Bot index: {botIndex}")
         bot_data = {}
         
         if botIndex!=None:
@@ -221,7 +223,7 @@ def get_embeddings():
             bot_data['user_id'] = user.id 
         return jsonify({'bot': bot_data}), 200
     except Exception as e:
-        print(str(e))
+        logger.error(f"Error in bot endpoint: {str(e)}", exc_info=True)
         return jsonify({'error':'Server Error'}), 500
 
 @bot_blueprint.route('/update_chatbot', methods=['POST'])
@@ -274,25 +276,25 @@ def update_chatbot():
             if domain and domain != 'undefined':
                 registered_website.domain = domain
                 registered_website.save()
-                print(f"Domain updated to: {domain}")
+                logger.info(f"Domain updated to: {domain}")
             elif domain == 'undefined' or domain == '':
                 RegisteredWebsite.del_by_bot_id(botId)
-                print("Domain removed")
+                logger.info("Domain removed")
         else:
             existing_website = RegisteredWebsite.query.filter_by(domain=domain).first()
             if existing_website and existing_website.user_id == int(user_id):
-                print("visit this function")
+                logger.debug("visit this function")
                 existing_website.bot_id = botId
                 existing_website.save()
             elif existing_website and existing_website.user_id != int(user_id):
-                print("user_ID", user_id, existing_website.user_id)
+                logger.debug(f"user_ID: {user_id}, existing_website.user_id: {existing_website.user_id}")
                 return jsonify({"error": "Domain already registered by another user."}), 400
             elif domain and domain != 'undefined':
                 new_website = RegisteredWebsite(index=website_unique_id, user_id=user_id, bot_id=botId, domain=domain)
                 new_website.save()
         return jsonify({'message': 'Success'}), 201
     except Exception as e:
-        print("Error:", str(e))
+        logger.error(f"Error in get_chatbots: {str(e)}", exc_info=True)
         return jsonify({"error": "Server error"}), 500
     
 @bot_blueprint.route('/query', methods=['POST'])
@@ -308,7 +310,7 @@ def query():
         # Remove trailing slash if present
         # website = website.rstrip('/')
 
-        print(website)
+        logger.debug(f"Website: {website}")
         # Check domain
         reg_websites = RegisteredWebsite.get_by_bot_id(bot_id)
         def check_domain():
@@ -363,7 +365,7 @@ def query():
 
         return jsonify({'message': result, 'solve':solve}), 200
     except Exception as e:
-        print(str(e))
+        logger.error(f"Error in bot endpoint: {str(e)}", exc_info=True)
         return jsonify({'error': 'Server Error'}), 500
 
 @bot_blueprint.route('/del_messages', methods=['POST'])
@@ -376,7 +378,7 @@ def del_messages():
         return jsonify({'status': 'success'}), 201
         
     except Exception as e:
-        print(str(e))
+        logger.error(f"Error in bot endpoint: {str(e)}", exc_info=True)
         return jsonify({'status':'error'}), 500
 
 @bot_blueprint.route('/add_website', methods=['POST'])
@@ -408,7 +410,7 @@ def add_website():
 
         return jsonify({'message':'success'}), 201
     except Exception as e:
-        print(str(e))
+        logger.error(f"Error in bot endpoint: {str(e)}", exc_info=True)
         return jsonify({'message': 'error'}), 500
 
 @bot_blueprint.route('/remove_website', methods=['POST'])
@@ -421,7 +423,7 @@ def remove_website():
 
         return jsonify({'message':'error'}), 201
     except Exception as e:
-        print(str(e))
+        logger.error(f"Error in bot endpoint: {str(e)}", exc_info=True)
         return jsonify({'message': 'error'}), 500
             
 @bot_blueprint.route('/get_websites', methods=['GET'])
@@ -436,5 +438,5 @@ def get_websites():
         
         return jsonify(websites_json)
     except Exception as e:
-        print(str(e))
+        logger.error(f"Error in bot endpoint: {str(e)}", exc_info=True)
         return jsonify({'message':'error'}), 500

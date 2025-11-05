@@ -2,6 +2,8 @@ import os
 import uuid
 import time
 import pymysql
+import logging
+from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, make_response
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -61,6 +63,23 @@ jwt = JWTManager(app)
 
 db.init_app(app)
 migrate = Migrate(app, db)
+
+# Configure logging
+if not app.debug:
+    log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+    app.logger.setLevel(getattr(logging, log_level, logging.INFO))
+    
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    
+    file_handler = RotatingFileHandler('logs/chatforge.log', maxBytes=10240000, backupCount=10)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    ))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('ChatForge startup')
 
 def scheduled_task():
    with app.app_context():
