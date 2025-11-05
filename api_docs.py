@@ -157,3 +157,352 @@ class CreateBot(Resource):
         """
         pass
 
+@bot_ns.route('/get_chatbots')
+class GetChatbots(Resource):
+    @bot_ns.doc('get_chatbots', security='Bearer')
+    @bot_ns.param('userId', 'User ID', required=True)
+    @bot_ns.marshal_with(success_response_model, code=200)
+    @bot_ns.marshal_with(error_response_model, code=400)
+    def get(self):
+        """
+        Get all chatbots for a user
+        
+        Requires JWT authentication
+        """
+        pass
+
+@bot_ns.route('/get_chatbot_data')
+class GetChatbotData(Resource):
+    @bot_ns.doc('get_chatbot_data', security='Bearer')
+    @bot_ns.param('botId', 'Bot ID', required=True)
+    @bot_ns.param('userId', 'User ID', required=True)
+    @bot_ns.marshal_with(success_response_model, code=200)
+    @bot_ns.marshal_with(error_response_model, code=400)
+    def get(self):
+        """
+        Get detailed data for a specific chatbot
+        
+        Requires JWT authentication
+        """
+        pass
+
+@bot_ns.route('/del_bot')
+class DeleteBot(Resource):
+    @bot_ns.doc('del_bot', security='Bearer')
+    @bot_ns.expect(api.model('DeleteBot', {
+        'botId': fields.Integer(required=True, description='Bot ID to delete')
+    }))
+    @bot_ns.marshal_with(success_response_model, code=200)
+    @bot_ns.marshal_with(error_response_model, code=400)
+    def post(self):
+        """
+        Delete a chatbot
+        
+        Requires JWT authentication
+        """
+        pass
+
+@bot_ns.route('/update_chatbot')
+class UpdateChatbot(Resource):
+    @bot_ns.doc('update_chatbot', security='Bearer')
+    @bot_ns.expect(create_bot_model)
+    @bot_ns.marshal_with(success_response_model, code=200)
+    @bot_ns.marshal_with(error_response_model, code=400)
+    def post(self):
+        """
+        Update chatbot settings
+        
+        Requires JWT authentication
+        """
+        pass
+
+@bot_ns.route('/del_messages')
+class DeleteMessages(Resource):
+    @bot_ns.doc('del_messages', security='Bearer')
+    @bot_ns.expect(api.model('DeleteMessages', {
+        'sessionId': fields.String(required=True, description='Session ID')
+    }))
+    @bot_ns.marshal_with(success_response_model, code=200)
+    def post(self):
+        """
+        Delete conversation messages for a session
+        
+        Requires JWT authentication
+        """
+        pass
+
+# Auth namespace endpoints - additional
+@auth_ns.route('/get_user')
+class GetUser(Resource):
+    @auth_ns.doc('get_user', security='Bearer')
+    @auth_ns.expect(api.model('GetUser', {
+        'userID': fields.Integer(required=True, description='User ID')
+    }))
+    @auth_ns.marshal_with(success_response_model, code=200)
+    @auth_ns.marshal_with(error_response_model, code=404)
+    def post(self):
+        """
+        Get user information
+        
+        Requires JWT authentication
+        """
+        pass
+
+@auth_ns.route('/update_user')
+class UpdateUser(Resource):
+    @auth_ns.doc('update_user', security='Bearer')
+    @auth_ns.expect(register_model)
+    @auth_ns.marshal_with(success_response_model, code=200)
+    @auth_ns.marshal_with(error_response_model, code=400)
+    def post(self):
+        """
+        Update user information
+        
+        Requires JWT authentication
+        """
+        pass
+
+@auth_ns.route('/forgot_password')
+class ForgotPassword(Resource):
+    @auth_ns.doc('forgot_password')
+    @auth_ns.expect(api.model('ForgotPassword', {
+        'email': fields.String(required=True, description='User email')
+    }))
+    @auth_ns.marshal_with(success_response_model, code=200)
+    @auth_ns.marshal_with(error_response_model, code=404)
+    def post(self):
+        """
+        Request password reset
+        
+        Sends password reset email to user
+        """
+        pass
+
+@auth_ns.route('/reset_with_token')
+class ResetPassword(Resource):
+    @auth_ns.doc('reset_password')
+    @auth_ns.expect(api.model('ResetPassword', {
+        'token': fields.String(required=True, description='Reset token'),
+        'password': fields.String(required=True, description='New password')
+    }))
+    @auth_ns.marshal_with(success_response_model, code=201)
+    @auth_ns.marshal_with(error_response_model, code=400)
+    def post(self):
+        """
+        Reset password with token
+        
+        Resets user password using verification token
+        """
+        pass
+
+# Knowledge namespace endpoints
+upload_document_model = api.model('UploadDocument', {
+    'name': fields.String(required=True, description='Knowledge base name'),
+    'userID': fields.Integer(required=True, description='User ID'),
+    'files': fields.List(fields.Raw, description='Document files'),
+    'qa': fields.String(description='Q&A JSON'),
+    'docs': fields.String(description='Docs JSON'),
+    'urls': fields.String(description='URLs JSON')
+})
+
+@knowledge_ns.route('/upload_document')
+class UploadDocument(Resource):
+    @knowledge_ns.doc('upload_document', security='Bearer')
+    @knowledge_ns.expect(upload_document_model)
+    @knowledge_ns.marshal_with(success_response_model, code=201)
+    @knowledge_ns.marshal_with(error_response_model, code=400)
+    def post(self):
+        """
+        Upload documents to knowledge base
+        
+        Supports multiple file types (PDF, DOCX, TXT, etc.)
+        Requires JWT authentication
+        """
+        pass
+
+@knowledge_ns.route('/get_knowledge_bases')
+class GetKnowledgeBases(Resource):
+    @knowledge_ns.doc('get_knowledge_bases', security='Bearer')
+    @knowledge_ns.param('userId', 'User ID', required=True)
+    @knowledge_ns.marshal_with(success_response_model, code=200)
+    @knowledge_ns.marshal_with(error_response_model, code=400)
+    def get(self):
+        """
+        Get all knowledge bases for a user
+        
+        Requires JWT authentication
+        """
+        pass
+
+@knowledge_ns.route('/get_knowledge_base')
+class GetKnowledgeBase(Resource):
+    @knowledge_ns.doc('get_knowledge_base', security='Bearer')
+    @knowledge_ns.param('baseId', 'Knowledge base ID', required=True)
+    @knowledge_ns.marshal_with(success_response_model, code=200)
+    @knowledge_ns.marshal_with(error_response_model, code=404)
+    def get(self):
+        """
+        Get detailed knowledge base information
+        
+        Includes documents, websites, and texts
+        Requires JWT authentication
+        """
+        pass
+
+@knowledge_ns.route('/del_knowledgebase')
+class DeleteKnowledgeBase(Resource):
+    @knowledge_ns.doc('del_knowledgebase', security='Bearer')
+    @knowledge_ns.expect(api.model('DeleteKB', {
+        'baseId': fields.Integer(required=True, description='Knowledge base ID')
+    }))
+    @knowledge_ns.marshal_with(success_response_model, code=200)
+    def post(self):
+        """
+        Delete a knowledge base
+        
+        Requires JWT authentication
+        """
+        pass
+
+# Ticket namespace endpoints
+book_ticket_model = api.model('BookTicket', {
+    'botId': fields.Integer(required=True, description='Bot ID'),
+    'userIndex': fields.String(required=True, description='User index'),
+    'sessionId': fields.String(required=True, description='Session ID'),
+    'email': fields.String(required=True, description='Email address'),
+    'content': fields.String(required=True, description='Ticket content'),
+    'website': fields.String(required=True, description='Website URL'),
+    'createdAt': fields.String(required=True, description='Creation timestamp')
+})
+
+@ticket_ns.route('/book')
+class BookTicket(Resource):
+    @ticket_ns.doc('book_ticket')
+    @ticket_ns.expect(book_ticket_model)
+    @ticket_ns.marshal_with(success_response_model, code=201)
+    @ticket_ns.marshal_with(error_response_model, code=500)
+    def post(self):
+        """
+        Create a support ticket
+        
+        Books a ticket and sends email notification
+        """
+        pass
+
+@ticket_ns.route('/get_tickets')
+class GetTickets(Resource):
+    @ticket_ns.doc('get_tickets', security='Bearer')
+    @ticket_ns.expect(api.model('GetTickets', {
+        'userID': fields.Integer(required=True, description='User ID')
+    }))
+    @ticket_ns.marshal_with(success_response_model, code=200)
+    def post(self):
+        """
+        Get all tickets for a user
+        
+        Requires JWT authentication
+        """
+        pass
+
+# Chat log namespace endpoints
+@chat_ns.route('/get_chat')
+class GetChat(Resource):
+    @chat_ns.doc('get_chat', security='Bearer')
+    @chat_ns.expect(api.model('GetChat', {
+        'userID': fields.Integer(required=True, description='User ID')
+    }))
+    @chat_ns.marshal_with(success_response_model, code=200)
+    def post(self):
+        """
+        Get chat logs for a user
+        
+        Requires JWT authentication
+        """
+        pass
+
+@chat_ns.route('/get_log_data')
+class GetLogData(Resource):
+    @chat_ns.doc('get_log_data', security='Bearer')
+    @chat_ns.expect(api.model('GetLogData', {
+        'sessionId': fields.String(required=True, description='Session ID')
+    }))
+    @chat_ns.marshal_with(success_response_model, code=200)
+    def post(self):
+        """
+        Get detailed conversation log for a session
+        
+        Requires JWT authentication
+        """
+        pass
+
+# Payment namespace endpoints
+checkout_session_model = api.model('CheckoutSession', {
+    'price_id': fields.String(required=True, description='Stripe price ID'),
+    'email': fields.String(required=True, description='Customer email')
+})
+
+@payment_ns.route('/create-checkout-session')
+class CreateCheckoutSession(Resource):
+    @payment_ns.doc('create_checkout')
+    @payment_ns.expect(checkout_session_model)
+    @payment_ns.marshal_with(success_response_model, code=200)
+    @payment_ns.marshal_with(error_response_model, code=400)
+    def post(self):
+        """
+        Create Stripe checkout session
+        
+        Returns Stripe checkout session URL
+        """
+        pass
+
+@payment_ns.route('/webhook')
+class PaymentWebhook(Resource):
+    @payment_ns.doc('payment_webhook')
+    def post(self):
+        """
+        Stripe webhook endpoint
+        
+        Handles Stripe payment events
+        """
+        pass
+
+# Shopify namespace endpoints
+@shopify_ns.route('/shopifyinstall')
+class ShopifyInstall(Resource):
+    @shopify_ns.doc('shopify_install')
+    @shopify_ns.param('shop', 'Shop domain', required=True)
+    @shopify_ns.param('hmac', 'HMAC signature', required=True)
+    @shopify_ns.param('timestamp', 'Timestamp', required=True)
+    def get(self):
+        """
+        Shopify app installation endpoint
+        
+        Initiates OAuth flow for Shopify app
+        """
+        pass
+
+@shopify_ns.route('/active_chatbots')
+class ActiveChatbots(Resource):
+    @shopify_ns.doc('active_chatbots')
+    @shopify_ns.param('shop', 'Shop domain', required=True)
+    @shopify_ns.marshal_with(success_response_model, code=200)
+    def get(self):
+        """
+        Get active chatbots for a Shopify store
+        """
+        pass
+
+# WordPress namespace endpoints
+@wordpress_ns.route('/wordpressinstall')
+class WordPressInstall(Resource):
+    @wordpress_ns.doc('wordpress_install')
+    @wordpress_ns.param('website_url', 'WordPress website URL', required=True)
+    @wordpress_ns.param('access_token', 'Access token', required=True)
+    def get(self):
+        """
+        WordPress plugin installation endpoint
+        
+        Initiates connection with WordPress site
+        """
+        pass
+
