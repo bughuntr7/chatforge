@@ -5,7 +5,8 @@ from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
 from utils.provider import generate
 from utils.common import upload_image_to_spaces, get_url_from_name
-from utils.errors import error_response, success_response
+from utils.errors import error_response, success_response, handle_exception
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 import uuid
 from datetime import datetime
 import os
@@ -86,9 +87,20 @@ def create_bot():
 
         return success_response(message='Bot created successfully', status_code=201)
 
+    except IntegrityError as e:
+        logger.warning(f"Integrity error in create_bot: {str(e)}")
+        db.session.rollback()
+        return error_response('Bot already exists or constraint violation', 409, 'CONFLICT_ERROR')
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in create_bot: {str(e)}", exc_info=True)
+        db.session.rollback()
+        return error_response('Database error', 500, 'DATABASE_ERROR')
+    except KeyError as e:
+        logger.warning(f"Missing field in create_bot: {str(e)}")
+        return error_response(f'Missing required field: {str(e)}', 400, 'VALIDATION_ERROR')
     except Exception as e:
         logger.error(f"Error in create_bot: {str(e)}", exc_info=True)
-        return error_response('Internal server error', 500, 'INTERNAL_ERROR')
+        return handle_exception(e)
 
 @bot_blueprint.route('/get_chatbots', methods=['GET'])
 @jwt_required()

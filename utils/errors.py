@@ -1,4 +1,6 @@
 from flask import jsonify
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from werkzeug.exceptions import BadRequest
 
 def error_response(message, status_code=500, error_code=None, details=None):
     """

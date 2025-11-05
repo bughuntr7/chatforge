@@ -13,7 +13,8 @@ import hashlib
 import datetime
 from api.mautic import get_access_token, create_mautic_user, update_mautic_user, login_mautic, mautic_reset_password, mautic_send_verfication_link, send_registration_mail
 from utils.common import get_language_code
-from utils.errors import error_response, success_response
+from utils.errors import error_response, success_response, handle_exception
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 import uuid
 from api.payment import create_customer_id
 import secrets
@@ -69,9 +70,15 @@ def login():
             logger.warning("Password verification failed.")
             return error_response('Invalid credentials', 401, 'UNAUTHORIZED')
 
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in login: {str(e)}", exc_info=True)
+        return error_response('Database error', 500, 'DATABASE_ERROR')
+    except KeyError as e:
+        logger.warning(f"Missing field in login: {str(e)}")
+        return error_response(f'Missing required field: {str(e)}', 400, 'VALIDATION_ERROR')
     except Exception as e:
         logger.error(f"Login error: {e}", exc_info=True)
-        return error_response('Internal server error', 500, 'INTERNAL_ERROR')
+        return handle_exception(e)
 
 
 @user_blueprint.route('/register', methods=['POST'])
@@ -133,12 +140,19 @@ def register():
             return jsonify({'error': 'User already exists'}), 409
 
     except KeyError as e:
-        # If any key is missing in the data
-        return jsonify({'error': f'Missing key in data: {e}'}), 400
+        logger.warning(f"Missing field in register: {str(e)}")
+        return error_response(f'Missing required field: {str(e)}', 400, 'VALIDATION_ERROR')
+    except IntegrityError as e:
+        logger.warning(f"Integrity error in register: {str(e)}")
+        db.session.rollback()
+        return error_response('User already exists', 409, 'CONFLICT_ERROR')
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in register: {str(e)}", exc_info=True)
+        db.session.rollback()
+        return error_response('Database error', 500, 'DATABASE_ERROR')
     except Exception as e:
-        # For any other errors
         logger.error(f"Error in register: {str(e)}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
+        return handle_exception(e)
 
 @user_blueprint.route('/get_user', methods=['POST'])
 @cross_origin()
