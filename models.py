@@ -159,7 +159,6 @@ class User(db.Model):
             'mauticId': self.mauticId,
             'botsActive': self.botsActive,
             'language': get_language_name(self.language),
-            'password': self.password,  # Note: It's generally not safe to include password information here.
             'com_name': self.com_name,
             'com_vat': self.com_vat,
             'com_street': self.com_street,
