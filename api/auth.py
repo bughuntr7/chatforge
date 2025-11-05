@@ -24,7 +24,7 @@ user_blueprint = Blueprint('user_blueprint', __name__)
 @user_blueprint.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-        if not data or not data['email'] or not data['password']:
+    if not data or not data['email'] or not data['password']:
         return error_response('Email and password are required', 400, 'VALIDATION_ERROR')
 
     try:
