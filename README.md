@@ -82,6 +82,17 @@ Content-Type: application/json
 }
 ```
 
+## 📚 API Documentation
+
+Interactive API documentation is available at:
+➡️ **http://localhost:5000/api/docs/**
+
+The Swagger UI provides:
+- Complete API endpoint documentation
+- Request/response schemas
+- Try-it-out functionality
+- Authentication support
+
 ---
 
 ## 🧱 Tech Stack

@@ -8,7 +8,16 @@ api = Api(
     title='ChatForge API',
     description='Scalable AI Chatbot API built with Flask, OpenAI, and vector memory',
     doc='/docs/',
-    prefix='/api'
+    prefix='/api',
+    authorizations={
+        'Bearer': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization',
+            'description': 'Type in the *\'Value\'* input box: **Bearer {token}**'
+        }
+    },
+    security='Bearer'
 )
 
 # Namespace definitions
@@ -78,12 +87,73 @@ success_response_model = api.model('Success', {
 @api_blueprint.route('/')
 class APIInfo(Resource):
     @api.doc('api_info')
+    @api.marshal_with(success_response_model)
     def get(self):
         """API information and health check"""
         return {
             'message': 'ChatForge API is running',
-            'status': 'healthy',
-            'version': '1.0.0',
-            'docs': '/api/docs/'
+            'status': 200,
+            'data': {
+                'version': '1.0.0',
+                'docs': '/api/docs/'
+            }
         }
+
+# Auth namespace endpoints
+@auth_ns.route('/login')
+class Login(Resource):
+    @auth_ns.doc('login')
+    @auth_ns.expect(login_model)
+    @auth_ns.marshal_with(success_response_model, code=200)
+    @auth_ns.marshal_with(error_response_model, code=401)
+    def post(self):
+        """
+        User login endpoint
+        
+        Returns JWT access token on successful authentication
+        """
+        pass
+
+@auth_ns.route('/register')
+class Register(Resource):
+    @auth_ns.doc('register')
+    @auth_ns.expect(register_model)
+    @auth_ns.marshal_with(success_response_model, code=201)
+    @auth_ns.marshal_with(error_response_model, code=400)
+    def post(self):
+        """
+        User registration endpoint
+        
+        Creates a new user account
+        """
+        pass
+
+# Bot namespace endpoints
+@bot_ns.route('/query')
+class ChatQuery(Resource):
+    @bot_ns.doc('chat_query')
+    @bot_ns.expect(chat_query_model)
+    @bot_ns.marshal_with(success_response_model, code=200)
+    @bot_ns.marshal_with(error_response_model, code=403)
+    def post(self):
+        """
+        Send a chat query to the bot
+        
+        Processes user message and returns AI-generated response
+        """
+        pass
+
+@bot_ns.route('/create_bot')
+class CreateBot(Resource):
+    @bot_ns.doc('create_bot', security='Bearer')
+    @bot_ns.expect(create_bot_model)
+    @bot_ns.marshal_with(success_response_model, code=201)
+    @bot_ns.marshal_with(error_response_model, code=400)
+    def post(self):
+        """
+        Create a new chatbot
+        
+        Requires JWT authentication
+        """
+        pass
 
