@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify, current_app, url_for
 from flask_jwt_extended import  create_access_token, create_refresh_token,  jwt_required, get_jwt_identity, set_access_cookies
+import logging
+
+logger = logging.getLogger(__name__)
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_cors import cross_origin
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
@@ -53,7 +56,7 @@ def login():
             mautic_data["com_website"]=user.com_website
             mautic_data["last_login"]=login_datetime
             if login_mautic(mautic_data, user.mauticId) == 'error':
-                print("Password verification successful.")  # Additional debug information
+                logger.debug("Password verification successful.")
                 return jsonify({'error': 'Server is busy. Try again later!'}), 400
             
             access_token = create_access_token(identity=user.id, expires_delta=datetime.timedelta(hours=1))
@@ -62,7 +65,7 @@ def login():
             return jsonify({'accessToken': access_token, 'userId':user.id, 'userIndex':user.index, 'firstName':user.first_name, 'lastName':user.last_name, 'role':user.role, 'plan':user.billing_plan, 'status':user.status, 'isVerified':user.isVerified}), 200
             # set_access_cookies(response, token)
         else:
-            print("Password verification failed.")  # Additional debug information
+            logger.warning("Password verification failed.")
             return jsonify({'error': 'Wrong credentials'}), 403
 
     except Exception as e:
@@ -105,7 +108,7 @@ def register():
         if User.check_user_exist(email):
             return jsonify({'error': 'User already exists'}), 409
         mauticId = create_mautic_user(data)
-        print(mauticId)
+        logger.debug(f"Mautic ID: {mauticId}")
         if mauticId == 'error':
             return jsonify({'error': 'Invalid email!'}), 400
         # Create a stripe customer
@@ -118,7 +121,7 @@ def register():
         
         # Attempt to register the user
         if new_user.register_user_if_not_exist():
-            print("Starting...")
+            logger.info("Starting user registration...")
             serializer = URLSafeTimedSerializer(current_app.config['JWT_SECRET_KEY'])
             verification_token = serializer.dumps(email, salt='email-confirm')
             verification_link = f"http://login.aiana.io/signup/verify-email?token={verification_token}"
@@ -133,7 +136,7 @@ def register():
         return jsonify({'error': f'Missing key in data: {e}'}), 400
     except Exception as e:
         # For any other errors
-        print("Error:", str(e))
+        logger.error(f"Error in register: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 @user_blueprint.route('/get_user', methods=['POST'])
@@ -171,7 +174,7 @@ def del_user():
         else:
             return jsonify({'error': 'You do not have right access!'}), 403
     except Exception as e:
-        print(str(e))
+        logger.error(f"Error in auth endpoint: {str(e)}", exc_info=True)
         return jsonify({'error': 'Server is busy. Try later!'}), 500
 
 @user_blueprint.route('/get_user_as_admin', methods=['POST'])
@@ -204,7 +207,7 @@ def get_users():
 
         return jsonify(user_list), 200
     except Exception as e:
-        print('Error in get_users()', str(e))
+        logger.error(f"Error in get_users(): {str(e)}", exc_info=True)
         return jsonify({'messsage':'Server Error!'}), 500
         
 @user_blueprint.route('/update_user', methods=['POST'])
@@ -267,7 +270,7 @@ def send_link():
     user = User.get_by_email(email)
 
     if not user:
-        print("User not found")
+        logger.warning("User not found")
         return 'User not found', 404
     
     serializer = URLSafeTimedSerializer(current_app.config['JWT_SECRET_KEY'])
@@ -282,14 +285,14 @@ def send_link():
 @user_blueprint.route('/reset_with_token', methods = ['GET', 'POST'])
 def reset_with_token():
     data = request.get_json()
-    print(data)
+    logger.debug(f"Request data: {data}")
     password = data['password']
     token = data['token']
-    print(current_app.config['JWT_SECRET_KEY'])
+    logger.debug("JWT secret key accessed")
     serializer = URLSafeTimedSerializer(current_app.config['JWT_SECRET_KEY'])
     try:
         email = serializer.loads(token, salt='email-confirm', max_age=3600)
-        print(email)
+        logger.debug(f"Email: {email}")
         user = User.get_by_email(email)
         user.password = generate_password_hash(password)
         user.save()
@@ -300,7 +303,7 @@ def reset_with_token():
         return jsonify({'message': 'The password reset link is expired'}), 400
 
     except Exception as e:
-        print(str(e))
+        logger.error(f"Error in auth endpoint: {str(e)}", exc_info=True)
         return jsonify({'message':'Server Error'}), 500
 
 @user_blueprint.route('/refresh', methods=['POST'])
@@ -325,9 +328,9 @@ def email_verification():
         token = data['token']
         serializer = URLSafeTimedSerializer(current_app.config['JWT_SECRET_KEY'])
         email = serializer.loads(token, salt='email-confirm', max_age=300)
-        print("email verification", email)
+        logger.debug(f"Email verification: {email}")
         user = User.query.filter_by(verification_token=token).first()
-        print("user verification", user.email)
+        logger.debug(f"User verification: {user.email}")
         if user.email == email:
             user.isVerified = True
             user.verification_token = None
