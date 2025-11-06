@@ -28,7 +28,7 @@ It supports hybrid LLMs, contextual memory, modular API routes, and can be easil
 ## 🧩 Setup & Environment
 
 ### 1️⃣ Install Dependencies
-Make sure you're using **Python 3.10+**, then run:
+Make sure you're using **Python 3.10+**, run:
 ```bash
 pip install -r requirements.txt
 ```
